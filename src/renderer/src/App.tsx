@@ -1,8 +1,10 @@
+import React from 'react'
+import Versions from './components/Versions'
 
-function App(): JSX.Element {
+const App: React.FC = () => {
   return (
-    <div className="container">
-
+    <div className="container"  >
+      <Versions />
      
     </div>
   )
