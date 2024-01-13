@@ -6,10 +6,12 @@
     "src/renderer/src/**/*.tsx",
     "src/preload/*.d.ts"
   ],
+
   "compilerOptions": {
     "composite": true,
     "jsx": "react-jsx",
       "esModuleInterop": true,
+      "types": ["node", "electron", "electron-vite/node"],
 
     "baseUrl": ".",
     "paths": {

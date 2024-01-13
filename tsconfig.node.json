@@ -3,7 +3,9 @@
   "include": ["electron.vite.config.*", "src/main/*", "src/preload/*"],
   "compilerOptions": {
     "composite": true,
+
     "esModuleInterop": true,
-    "types": ["electron-vite/node"]
+      "types": ["node", "electron", "electron-vite/node"],
+
   }
 }
