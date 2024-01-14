@@ -3,8 +3,9 @@ import { defineConfig, externalizeDepsPlugin, swcPlugin } from 'electron-vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
+
   main: {
-    plugins: [externalizeDepsPlugin(), swcPlugin()],
+    plugins: [externalizeDepsPlugin(), swcPlugin(), ],
     build: {
       rollupOptions: {
         input: {
@@ -14,7 +15,7 @@ export default defineConfig({
     }
   },
   preload: {
-    plugins: [externalizeDepsPlugin()],
+    plugins: [externalizeDepsPlugin(),],
     build: {
       rollupOptions: {
         input: {
@@ -30,7 +31,6 @@ export default defineConfig({
       }
     },
     plugins: [react()],
-    root: '.',
     build: {
       rollupOptions: {
         input: {
