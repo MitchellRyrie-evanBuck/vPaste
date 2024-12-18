@@ -1,7 +1,7 @@
 {
   "name": "electron-vpaste",
   "version": "1.0.0",
-  "description": "An Electron application with React and TypeScript",
+  "description": "A modern clipboard manager for Mac",
   "main": "./out/main/index.js",
   "author": "example.com",
   "homepage": "https://electron-vite.org",
@@ -22,7 +22,12 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^3.0.0",
-    "electron-updater": "^6.3.9"
+    "electron-updater": "^6.3.9",
+    "electron-store": "^8.1.0",
+    "@mantine/core": "^7.3.2",
+    "@mantine/hooks": "^7.3.2",
+    "lowdb": "^6.1.1",
+    "date-fns": "^3.0.6"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^2.0.0",

@@ -2,13 +2,18 @@ import { app, shell, BrowserWindow, ipcMain, clipboard } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { ClipboardManager } from './clipboard/clipboard-manager'
+
+let mainWindow: BrowserWindow | null = null
+let clipboardManager: ClipboardManager | null = null
 
 function createWindow(): void {
-  const mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 400,
+  mainWindow = new BrowserWindow({
+    width: 400,
+    height: 600,
     show: false,
     autoHideMenuBar: true,
+    alwaysOnTop: true,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -17,15 +22,19 @@ function createWindow(): void {
   })
 
   mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
+    mainWindow?.show()
   })
-  // 打开开发者工具
-  mainWindow.webContents.openDevTools()
+
+  // 初始化剪贴板管理器
+  if (mainWindow) {
+    clipboardManager = new ClipboardManager(mainWindow)
+    clipboardManager.startWatching()
+  }
+
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: 'deny' }
   })
-
 
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
@@ -34,15 +43,9 @@ function createWindow(): void {
   }
 }
 
-
-
 app.whenReady().then(() => {
-  // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
-  // Default open or close DevTools by F12 in development
-  // and ignore CommandOrControl + R in production.
-  // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
@@ -50,18 +53,21 @@ app.whenReady().then(() => {
   createWindow()
 
   app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
 })
 
+// IPC 通信处理
+ipcMain.handle('get-clipboard-history', () => {
+  return clipboardManager?.getHistory() || []
+})
+
+ipcMain.handle('toggle-favorite', (_, id: number) => {
+  clipboardManager?.toggleFavorite(id)
+})

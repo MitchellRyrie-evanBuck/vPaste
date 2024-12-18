@@ -1,11 +1,11 @@
 import React from 'react'
-import Versions from './components/Versions'
+import { ClipboardList } from './components/ClipboardList'
+import './assets/clipboard.css'
 
 const App: React.FC = () => {
   return (
-    <div className="container"  >
-      {/* <Versions /> */}
-
+    <div className="app-container">
+      <ClipboardList />
     </div>
   )
 }

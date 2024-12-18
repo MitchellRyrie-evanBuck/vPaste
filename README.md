@@ -5,9 +5,9 @@ An Electron application with React and TypeScript
 ## Recommended IDE Setup
 
 ```bash
-globalShortcut 
-clipboard 
-BrowserWindow 
+globalShortcut
+clipboard
+BrowserWindow
 
 该模块提供了以下方法：
 
@@ -29,6 +29,19 @@ clipboard.writeRTF(text[, type]): 将 RTF 内容写入剪贴板。默认情况�
 你需要在应用程序中显示一个对话框，以便在对话框中显示剪贴板内容。
 你需要在应用程序中处理键盘事件，以便在按下 ENTER 或 CTRL + C 时执行粘贴操作。
 你需要在应用程序中处理鼠标事件，以便在上下左右选择黏
+```
+
+```bash
+src/
+├── main/                 # Electron 主进程
+│   ├── clipboard/        # 剪贴板管理
+│   ├── store/           # 本地存储
+│   └── ipc/             # 进程间通信
+├── renderer/            # 渲染进程（React）
+│   ├── components/      # UI 组件
+│   ├── hooks/          # 自定义 Hooks
+│   └── pages/          # 页面
+└── preload/            # 预加载脚本
 ```
 
 ## Project Setup
