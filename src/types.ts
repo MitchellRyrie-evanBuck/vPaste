@@ -3,7 +3,7 @@ export interface ClipboardItem {
   timestamp: string;
   type: 'text' | 'image';
   content: string;
-  favorite: boolean;
+  favorite?: boolean;
 }
 
 export interface ClipboardState {

@@ -5,6 +5,11 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   main: {
     plugins: [externalizeDepsPlugin(), swcPlugin()],
+    resolve: {
+      alias: {
+        '@': resolve('src')
+      }
+    },
     build: {
       rollupOptions: {
         input: {
@@ -15,6 +20,11 @@ export default defineConfig({
   },
   preload: {
     plugins: [externalizeDepsPlugin()],
+    resolve: {
+      alias: {
+        '@': resolve('src')
+      }
+    },
     build: {
       rollupOptions: {
         input: {
@@ -26,6 +36,7 @@ export default defineConfig({
   renderer: {
     resolve: {
       alias: {
+        '@': resolve('src'),
         '@renderer': resolve('src/renderer/src'),
         '@preload': resolve('src/preload'),
         '@main': resolve('src/main')

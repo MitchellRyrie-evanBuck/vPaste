@@ -1,11 +1,10 @@
-import { app, shell, BrowserWindow, ipcMain, clipboard } from 'electron'
+import { app, shell, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { ClipboardManager } from './clipboard/clipboard-manager'
+import { startWatching, initializeIpcHandlers } from '@/main/clipboard/clipboard-manager'
 
 let mainWindow: BrowserWindow | null = null
-let clipboardManager: ClipboardManager | null = null
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
@@ -25,10 +24,10 @@ function createWindow(): void {
     mainWindow?.show()
   })
 
-  // 初始化剪贴板管理器
+  // 初始化剪贴板监听
   if (mainWindow) {
-    clipboardManager = new ClipboardManager(mainWindow)
-    clipboardManager.startWatching()
+    startWatching(mainWindow)
+    initializeIpcHandlers()
   }
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -61,13 +60,4 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
-})
-
-// IPC 通信处理
-ipcMain.handle('get-clipboard-history', () => {
-  return clipboardManager?.getHistory() || []
-})
-
-ipcMain.handle('toggle-favorite', (_, id: number) => {
-  clipboardManager?.toggleFavorite(id)
 })
