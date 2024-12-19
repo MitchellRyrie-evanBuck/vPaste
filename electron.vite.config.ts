@@ -1,6 +1,8 @@
 import { resolve } from 'path'
 import { defineConfig, externalizeDepsPlugin, swcPlugin } from 'electron-vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from 'tailwindcss'
+import autoprefixer from 'autoprefixer'
 
 export default defineConfig({
   main: {
@@ -37,9 +39,23 @@ export default defineConfig({
     resolve: {
       alias: {
         '@': resolve('src'),
-        '@renderer': resolve('src/renderer/src'),
-        '@preload': resolve('src/preload'),
-        '@main': resolve('src/main')
+        '@renderer': resolve('src/renderer/src')
+      }
+    },
+    css: {
+      preprocessorOptions: {
+        less: {
+          javascriptEnabled: true,
+          modifyVars: {
+            '@primary-color': '#1890ff'
+          }
+        }
+      },
+      postcss: {
+        plugins: [
+          tailwindcss(),
+          autoprefixer()
+        ]
       }
     },
     plugins: [react()],

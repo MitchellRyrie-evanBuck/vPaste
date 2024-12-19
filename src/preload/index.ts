@@ -1,36 +1,40 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { electronAPI } from '@electron-toolkit/preload'
+import type { ElectronAPI, ClipboardAPI } from '@/types/global'
 
-// Custom APIs for renderer
-const api = {
-  // 获取剪贴板历史
-  getClipboardHistory: () => ipcRenderer.invoke('get-clipboard-history'),
-
-  // 切换收藏状态
-  toggleFavorite: (id: number) => ipcRenderer.invoke('toggle-favorite', id),
-
-  // 监听剪贴板更新
-  onClipboardUpdate: (callback: Function) => {
-    ipcRenderer.on('clipboard-updated', (_, data) => callback(data))
-  },
-
-  // 移除监听
-  removeClipboardListener: () => {
-    ipcRenderer.removeAllListeners('clipboard-updated')
+// Electron API
+const electronAPI: ElectronAPI = {
+  ipcRenderer: {
+    on(channel: string, callback: (data: any) => void) {
+      ipcRenderer.on(channel, (_, data) => callback(data))
+    },
+    send(channel: string, data?: any) {
+      ipcRenderer.send(channel, data)
+    },
+    invoke(channel: string, ...args: any[]) {
+      return ipcRenderer.invoke(channel, ...args)
+    },
+    removeAllListeners(channel: string) {
+      ipcRenderer.removeAllListeners(channel)
+    }
   }
 }
 
-// Use `contextBridge` APIs to expose Electron APIs to
+// 剪贴板 API
+const clipboardAPI: ClipboardAPI = {
+  getHistory: () => ipcRenderer.invoke('get-clipboard-history'),
+  clearHistory: () => ipcRenderer.invoke('clear-clipboard-history'),
+  setContent: (content: string) => ipcRenderer.invoke('set-clipboard-content', content)
+}
+
+// 使用 contextBridge 暴露 API
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)
-    contextBridge.exposeInMainWorld('api', api)
+    contextBridge.exposeInMainWorld('clipboard', clipboardAPI)
   } catch (error) {
     console.error(error)
   }
 } else {
-  // @ts-ignore (define in dts)
   window.electron = electronAPI
-  // @ts-ignore (define in dts)
-  window.api = api
+  window.clipboard = clipboardAPI
 }

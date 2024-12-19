@@ -6,6 +6,8 @@
     "src/preload/**/*",
     "src/types.ts",
     "src/**/*",
+    "src/types/**/*.d.ts",
+
   ],
   "compilerOptions": {
     "composite": true,
