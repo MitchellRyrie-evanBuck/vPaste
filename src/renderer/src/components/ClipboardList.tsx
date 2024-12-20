@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { ClipboardItem } from '@/types';
 
 export const ClipboardList: React.FC = () => {
   const [items, setItems] = useState<ClipboardItem[]>([]);
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [selectedIndex, setSelectedIndex] = useState<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // 加载剪贴板历史
   useEffect(() => {
@@ -24,43 +26,38 @@ export const ClipboardList: React.FC = () => {
     };
   }, []);
 
-  // 键盘事件监听
+  // 监听键盘事件
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      switch (e.key) {
-        case 'ArrowUp':
-          e.preventDefault();
-          setSelectedIndex(prev => Math.max(0, prev - 1));
-          break;
-        case 'ArrowDown':
-          e.preventDefault();
-          setSelectedIndex(prev => Math.min(items.length - 1, prev + 1));
-          break;
-        case 'ArrowLeft':
-          e.preventDefault();
-          setSelectedIndex(prev => Math.max(0, prev - 1));
-          break;
-        case 'ArrowRight':
-          e.preventDefault();
-          setSelectedIndex(prev => Math.min(items.length - 1, prev + 1));
-          break;
-        case 'Enter':
-        case 'c':
-          if (e.metaKey || e.ctrlKey) { // Command+C 或 Ctrl+C
-            e.preventDefault();
-            copySelectedItem();
-          }
-          break;
-        case 'Escape':
-          e.preventDefault();
-          window.electron.ipcRenderer.send('hide-window');
-          break;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        setSelectedIndex((prev) => Math.max(0, prev - 1));
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        setSelectedIndex((prev) => Math.min(items.length - 1, prev + 1));
+      } else if (event.key === 'Enter' || (event.metaKey || event.ctrlKey) && event.key === 'c') {
+        event.preventDefault();
+        copySelectedItem();
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        window.electron.ipcRenderer.send('hide-window');
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [items, selectedIndex]);
+  }, [items.length]);
+
+  // 当选中项改变时，滚动到视图中
+  useEffect(() => {
+    if (itemRefs.current[selectedIndex]) {
+      itemRefs.current[selectedIndex]?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      });
+    }
+  }, [selectedIndex]);
 
   const loadClipboardHistory = async () => {
     let retries = 3;
@@ -91,20 +88,34 @@ export const ClipboardList: React.FC = () => {
   };
 
   return (
-    <div className="clipboard-list">
-      <h2 className="p-4 text-white bg-blue-500 hover:bg-blue-600">剪贴板历史</h2>
-      <div className="items">
+    <div className="flex flex-col h-screen bg-white/30 backdrop-blur-xl">
+      <h2 className="p-4 text-center text-black">剪贴板历史</h2>
+      <div
+        ref={containerRef}
+        className="flex overflow-x-auto flex-1 gap-4 p-4 snap-x snap-mandatory"
+      >
         {items.map((item, index) => (
           <div
             key={item.id}
-            className={`clipboard-item ${index === selectedIndex ? 'selected' : ''}`}
+            ref={el => itemRefs.current[index] = el}
+            className={`flex-shrink-0 w-80 h-[calc(100%-2rem)] p-4 rounded-lg shadow-lg
+              transition-all duration-200 cursor-pointer snap-center backdrop-blur-sm
+              ${index === selectedIndex
+                ? 'bg-blue-50/90 border-2 border-blue-500 transform scale-105'
+                : 'bg-white/80 border border-gray-200 hover:border-blue-300'}`}
             onClick={() => {
               setSelectedIndex(index);
               copySelectedItem();
             }}
           >
-            <div className="content">{item.content}</div>
-            <div className="time">{new Date(item.timestamp).toLocaleTimeString()}</div>
+            <div className="flex flex-col h-full">
+              <div className="flex-1 mb-2 text-sm line-clamp-[20] break-all">
+                {item.content}
+              </div>
+              <div className="text-xs text-gray-500">
+                {new Date(item.timestamp).toLocaleTimeString()}
+              </div>
+            </div>
           </div>
         ))}
       </div>
