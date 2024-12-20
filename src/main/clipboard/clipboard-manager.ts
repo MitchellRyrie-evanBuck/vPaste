@@ -1,4 +1,4 @@
-import { clipboard, ipcMain, BrowserWindow } from 'electron';
+import { clipboard, ipcMain, BrowserWindow, powerMonitor } from 'electron';
 import Store from 'electron-store';
 import { ClipboardItem } from '@/types';
 
@@ -15,9 +15,15 @@ if (!store.has('history')) {
 let lastContent: string = '';
 let watching: boolean = false;
 let mainWindow: BrowserWindow | null = null;
+let intervalId: NodeJS.Timeout | null = null;
 
 // 检查剪贴板变化
 const checkClipboard = () => {
+  // 如果窗口不存在或已被销毁，不执行检查
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return;
+  }
+
   const text = clipboard.readText();
   const image = clipboard.readImage();
 
@@ -43,8 +49,14 @@ const checkClipboard = () => {
   // 添加新项到历史记录
   store.set('history', [newItem, ...history]);
 
-  // 通知渲染进程更新
-  mainWindow?.webContents.send('clipboard-update', newItem);
+  // 只在窗口存在且可见时发送更新
+  if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+    try {
+      mainWindow.webContents.send('clipboard-update', newItem);
+    } catch (error) {
+      console.error('Error sending clipboard update:', error);
+    }
+  }
 };
 
 // 开始监听剪贴板
@@ -54,18 +66,55 @@ export const startWatching = (window: BrowserWindow) => {
   mainWindow = window;
   watching = true;
 
-  // 每秒检查剪贴板变化
-  setInterval(checkClipboard, 1000);
+  // 启动轮询
+  const startPolling = () => {
+    if (intervalId) return;
+    intervalId = setInterval(checkClipboard, 500);
+  };
+
+  // 停止轮询
+  const stopPolling = () => {
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+  };
+
+  // 监听窗口事件
+  mainWindow.on('show', startPolling);
+  mainWindow.on('hide', stopPolling);
+  mainWindow.on('close', stopPolling);
+
+  // 初始启动轮询
+  if (mainWindow.isVisible()) {
+    startPolling();
+  }
 };
 
 // 停止监听
 export const stopWatching = () => {
+  if (!watching) return;
+
+  if (intervalId) {
+    clearInterval(intervalId);
+    intervalId = null;
+  }
+
+  // 清理事件监听
+  powerMonitor.removeAllListeners('lock-screen');
+  powerMonitor.removeAllListeners('suspend');
+  powerMonitor.removeAllListeners('unlock-screen');
+  powerMonitor.removeAllListeners('resume');
+
   watching = false;
+  mainWindow = null;
 };
 
 // 获取历史记录
 export const getHistory = (): ClipboardItem[] => {
-  return store.get('history', []) as ClipboardItem[];
+  const history = store.get('history', []) as ClipboardItem[];
+  console.log('Getting clipboard history:', history);
+  return history;
 };
 
 // 清空历史记录
@@ -80,8 +129,28 @@ export const setClipboardContent = (content: string) => {
 };
 
 // 初始化 IPC 监听器
-export const initializeIpcHandlers = () => {
-  ipcMain.handle('get-clipboard-history', getHistory);
-  ipcMain.handle('clear-clipboard-history', clearHistory);
-  ipcMain.handle('set-clipboard-content', (_, content: string) => setClipboardContent(content));
+export const initializeIpcHandlers = (): void => {
+  console.log('Initializing IPC handlers');
+
+  ipcMain.handle('get-clipboard-history', () => {
+    console.log('Handling get-clipboard-history request');
+    return getHistory();
+  });
+
+  ipcMain.handle('clear-clipboard-history', () => {
+    console.log('Handling clear-clipboard-history request');
+    store.set('history', []);
+    mainWindow?.webContents.send('clipboard-update', null);
+  });
+
+  ipcMain.handle('set-clipboard-content', (_, content: string) => {
+    console.log('Handling set-clipboard-content request:', content);
+    clipboard.writeText(content);
+  });
+
+  // 处理窗口隐藏请求
+  ipcMain.on('hide-window', () => {
+    console.log('Handling hide-window request');
+    mainWindow?.hide();
+  });
 };

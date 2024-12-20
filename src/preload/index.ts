@@ -16,12 +16,21 @@ const electronAPI: ElectronAPI = {
     removeAllListeners(channel: string) {
       ipcRenderer.removeAllListeners(channel)
     }
+  },
+  process: {
+    versions: process.versions,
+    platform: process.platform,
+    arch: process.arch,
+    env: process.env
   }
 }
 
 // 剪贴板 API
 const clipboardAPI: ClipboardAPI = {
-  getHistory: () => ipcRenderer.invoke('get-clipboard-history'),
+  getHistory: () => {
+    console.log('Calling getHistory from preload')
+    return ipcRenderer.invoke('get-clipboard-history')
+  },
   clearHistory: () => ipcRenderer.invoke('clear-clipboard-history'),
   setContent: (content: string) => ipcRenderer.invoke('set-clipboard-content', content)
 }
@@ -29,12 +38,14 @@ const clipboardAPI: ClipboardAPI = {
 // 使用 contextBridge 暴露 API
 if (process.contextIsolated) {
   try {
+    console.log('Exposing APIs through contextBridge')
     contextBridge.exposeInMainWorld('electron', electronAPI)
     contextBridge.exposeInMainWorld('clipboard', clipboardAPI)
   } catch (error) {
-    console.error(error)
+    console.error('Error exposing APIs:', error)
   }
 } else {
+  console.log('Context isolation is disabled')
   window.electron = electronAPI
   window.clipboard = clipboardAPI
 }
