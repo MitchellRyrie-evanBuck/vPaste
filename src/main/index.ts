@@ -2,7 +2,11 @@ import { app, shell, BrowserWindow, globalShortcut } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { startWatching, initializeIpcHandlers, stopWatching } from '@/main/clipboard/clipboard-manager'
+import {
+  startWatching,
+  initializeIpcHandlers,
+  stopWatching
+} from '@/main/clipboard/clipboard-manager'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -33,7 +37,6 @@ function createWindow(): void {
       mainWindow.show()
       // 初始化剪贴板监听
       startWatching(mainWindow)
-      initializeIpcHandlers()
     }
   })
 
@@ -62,10 +65,12 @@ function createWindow(): void {
     // 尝试重新加载
     if (mainWindow && !mainWindow.isDestroyed()) {
       setTimeout(() => {
-        if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-          mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
-        } else {
-          mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+            mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+          } else {
+            mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+          }
         }
       }, 1000)
     }
@@ -90,6 +95,9 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
+  // 初始化 IPC 处理程序
+  initializeIpcHandlers()
+  
   createWindow()
   registerShortcuts()
 

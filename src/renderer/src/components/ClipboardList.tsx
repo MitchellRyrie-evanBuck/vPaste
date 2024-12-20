@@ -63,13 +63,23 @@ export const ClipboardList: React.FC = () => {
   }, [items, selectedIndex]);
 
   const loadClipboardHistory = async () => {
-    try {
-      console.log('Loading clipboard history...');
-      const history = await window.clipboard.getHistory();
-      console.log('Loaded clipboard history:', history);
-      setItems(history);
-    } catch (error) {
-      console.error('Error loading clipboard history:', error);
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        console.log('Loading clipboard history... (retries left:', retries, ')');
+        const history = await window.clipboard.getHistory();
+        console.log('Loaded clipboard history:', history);
+        setItems(history);
+        return;
+      } catch (error) {
+        retries--;
+        if (retries === 0) {
+          console.error('Error loading clipboard history:', error);
+        } else {
+          console.log('Retrying in 500ms...');
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
     }
   };
 

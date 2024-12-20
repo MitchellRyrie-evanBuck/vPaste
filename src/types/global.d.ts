@@ -18,7 +18,7 @@ interface ProcessVersions {
 // 主进程暴露给渲染进程的 API
 export interface ElectronAPI {
   ipcRenderer: IpcRenderer
-  process: {
+  process?: {
     versions: ProcessVersions
     platform: string
     arch: string

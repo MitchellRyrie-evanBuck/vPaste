@@ -17,12 +17,6 @@ const electronAPI: ElectronAPI = {
       ipcRenderer.removeAllListeners(channel)
     }
   },
-  process: {
-    versions: process.versions,
-    platform: process.platform,
-    arch: process.arch,
-    env: process.env
-  }
 }
 
 // 剪贴板 API
