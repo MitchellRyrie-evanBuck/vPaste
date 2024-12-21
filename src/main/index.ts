@@ -135,7 +135,7 @@ function showWindow() {
     const animate = () => {
       currentStep++
       const newY = startY - (stepSize * currentStep)
-      mainWindow.setPosition(0, Math.round(newY))
+      mainWindow && mainWindow.setPosition(0, Math.round(newY))
 
       if (currentStep < steps) {
         setTimeout(animate, 10)
@@ -160,12 +160,12 @@ function hideWindow() {
     const animate = () => {
       currentStep++
       const newY = startY + (stepSize * currentStep)
-      mainWindow.setPosition(0, Math.round(newY))
+      mainWindow && mainWindow.setPosition(0, Math.round(newY))
 
       if (currentStep < steps) {
         setTimeout(animate, 10)
       } else {
-        mainWindow.hide()
+        mainWindow && mainWindow.hide()
         // 恢复之前的窗口焦点
         if (previouslyFocusedWindow !== null) {
           const previousWindow = BrowserWindow.fromId(previouslyFocusedWindow)
